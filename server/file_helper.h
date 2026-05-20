@@ -20,6 +20,7 @@ char * file_read(const char* path, const char* mode)
     long buff_size = ftell(fp);
     rewind(fp);
 
+    // add 1 to size of buffer, to make room for the null character at the end of the buffer
     char* buffer = (char*) calloc(buff_size + 1, sizeof(char));
 
     size_t new_len = fread(buffer, sizeof(char), buff_size, fp);
