@@ -44,6 +44,12 @@ int server_accept_new_conn(struct sockaddr_in* address, int server_fd, socklen_t
         return client_fd;
     }
 
+    struct in_addr ipAddr = address->sin_addr;
+    char str[INET_ADDRSTRLEN];
+    inet_ntop(AF_INET, &ipAddr, str, INET_ADDRSTRLEN);
+
+    printf("connection from: %s\n", str);
+
     return client_fd;
 }
 
@@ -61,6 +67,8 @@ void* server_client_conn_thread(void* arg)
     {
         printf("Client disconnected.\n");
     }
+
+    printf("(request): %s\n", in_buffer);
     
     char* data = file_read("./assets/page.html", "rb");
     char* header_data = file_read("./assets/http_header.txt", "rb");
