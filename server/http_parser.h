@@ -21,38 +21,41 @@
 // Priority: u=6
 
 
-enum req_types {
+enum request {
     GET, POST, PUT, DELETE, OTHER
 };
 
-enum conn_type {
-    KEEP_ALIVE, CLOSE
+enum connection {
+    UNDEF, CLOSE, KEEP_ALIVE
 };
 
 struct http_req {
-    enum req_types req_type;
-    char resource_loc[100];
-    enum conn_type conn_type;
+    enum request request;
+    enum connection connection;
+    char resource_loc[80];
 };
 
 
 
-enum req_types get_request_type(const char* type_str)
-{
+void set_request_type(const char* type_str, struct http_req* header)
+{   
+    header->request = OTHER;
+
     if (strncmp(type_str, "GET", 3) == 0)
-        return GET;
+        header->request = GET;
     
     if (strncmp(type_str, "POST", 4) == 0)
-        return POST;
+        header->request = POST;
     
     if (strncmp(type_str, "PUT", 3) == 0)
-        return PUT;
+        header->request = PUT;
     
     if (strncmp(type_str, "DELETE", 6) == 0)
-        return DELETE;
+        header->request = DELETE;
 
-    return OTHER;
 }
+
+
 
 /**
  * converts the http header request string into a list
@@ -66,11 +69,21 @@ List* parser_convert_to_list(const char* str, int size)
     int end = 0;
     while (i < size)
     {   
-        if (is_newline(str[i]))
+        if (is_carriage(str[i]) && is_newline(str[i + 1]))
         {
-            end = i;
-            l_push(header_list, get_substring(str, start, end - 1));    // end - 1 to not include newline byte
-            start = i + 1;
+            end = i - 1; // i - 1 to not include control byte
+            char * substring = get_substring(str, start, end);
+            if (substring == NULL)
+            {
+                i++;
+                continue;
+            }
+                
+            l_push(header_list, substring);
+
+            start = i + 2;
+            i += 2; // jump 2 positions ahead over carriage and newline bytes
+            continue;
         }
         i++;
     }
@@ -79,37 +92,78 @@ List* parser_convert_to_list(const char* str, int size)
 }
 
 
-struct http_req parse(const char* str, int size)
+List* get_tokens(char* str, unsigned int size)
 {
-    bool expect_req_type = true;
-    bool expect_resource_loc = false;
-    bool expect_conn_type = false;
-    struct http_req request_header;
-
-    List* header_list = parser_convert_to_list(str, size);
-
-    l_print_simple(header_list);
-
+    List* tokens = l_newList();
     int i = 0;
+    int start = 0;
+    int end = 0;
     while (i < size)
     {
-        if (expect_req_type)
+        if (is_space(str[i]) || str[i] == '\0')
         {
-            char type[10] = {0};
-            int j = 0;
-            while(!is_space(str[i]))
+            end = i - 1;
+            char* substring = get_substring(str, start, end);
+            if (substring == NULL)
             {
-                type[j] = str[i];
                 i++;
-                j++;
+                continue;
             }
-            request_header.req_type = get_request_type(type);
-            expect_req_type = false;
-            expect_resource_loc = true;
+            l_push(tokens, substring);
+            start = i + 1;
         }
-
         i++;
     }
+
+    return tokens;
+}
+
+
+void set_connection_type(List* list, struct http_req* header)
+{
+    Node* it = list->top;
+
+    while(it != NULL)
+    {
+        List* key_value = get_tokens(it->data, it->size);
+        Node* key = key_value->bottom;
+
+        if (strncmp(key->data, "Connection:", key->size) == 0)
+        {
+            Node* value = key_value->bottom->prev;
+
+            if (strncmp(value->data, "keep-alive", 10)  == 0)
+                header->connection = KEEP_ALIVE;
+            
+            if (strncmp(value->data, "closed", 6)  == 0)
+                header->connection = CLOSE;
+
+            if (strncmp(value->data, "close", 5)  == 0)
+                header->connection = CLOSE;
+
+        }
+        l_free_list(key_value);
+        it = it->next;
+    }
+}
+
+
+struct http_req parse(const char* str, int size)
+{
+    struct http_req header;
+    memset(header.resource_loc, 0, sizeof(header.resource_loc));
+
+    List* h_list = parser_convert_to_list(str, size);
+    List* req_list = get_tokens(h_list->bottom->data, h_list->bottom->size);
+
+
+    l_print_simple(h_list);
+    
+    set_request_type(req_list->bottom->data, &header);
+    set_connection_type(h_list, &header);
+    strncpy(header.resource_loc, req_list->bottom->prev->data, req_list->bottom->prev->size);
+    l_free_list(req_list);
+
 }
 
 

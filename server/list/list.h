@@ -27,6 +27,7 @@ void l_print(List * list, char dir);
 void l_print_simple(List* list);
 
 List * l_newList();
+void l_free_list(List * l);
 void l_cleanupNode(Node * n);
 Node * l_createNode(char * val);
 

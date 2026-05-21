@@ -5,6 +5,7 @@ struct _node {
     struct _node * next;
     struct _node * prev;
     unsigned int i;
+    unsigned int size;
     char * data;
 };
 
