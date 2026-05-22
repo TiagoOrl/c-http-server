@@ -1,94 +1,93 @@
 #include "list.h"
 
 
-Node * l_createNode(char * data)
+node * l_create_node(unsigned char * data, size_t size)
 {
-    Node * node = (Node *)malloc(sizeof(Node));
-    node->next = NULL;
-    node->prev = NULL;
-    int real_size = strlen(data) + 1; // additional space for null terminator
-    node->data = (char *)calloc(real_size, sizeof(char));
-    node->i = -1;
+    node * item = (node* )malloc(sizeof(node));
+    item->next = NULL;
+    item->prev = NULL;
+    item->data = calloc(size + 1, sizeof(char));
+    item->size = size + 1;
+    item->i = -1;
 
-    node->size = real_size;
-    node->data[real_size] = '\0';
-    strcpy(node->data, data);
+    memcpy(item->data, data, size);
 
-    return node;
+    item->data[item->size - 1] = '\0';
+
+    return item;
 }
 
-void l_push(List * list, char * data)
+void l_push(list *_list, unsigned char * data, size_t size)
 {
-    Node * newNode = l_createNode(data);
+    node * new_node = l_create_node(data, size);
 
-    newNode->i = list->size;
+    new_node->i = _list->size;
 
-    if (list->top == NULL || list->size == 0)
+    if (_list->top == NULL || _list->size == 0)
     {
-        list->top = newNode;
-        list->bottom = newNode;
+        _list->top = new_node;
+        _list->bottom = new_node;
     }
     else 
     {
-        list->top->prev = newNode;
-        newNode->next = list->top;
-        list->top = newNode;
+        _list->top->prev = new_node;
+        new_node->next = _list->top;
+        _list->top = new_node;
     }
-    list->size++;
+    _list->size++;
 }
 
-void l_insertAt(List * list, char * data, size_t i)
+void l_insert_at(list *_list, unsigned char * data, int pos, size_t size)
 {
     if (
-        list ==  NULL ||
-        i >= list->size ||
-        i < 0
+        pos >= _list->size ||
+        pos < 0
     )
         return;
 
 
-    if (list->size < 1)
+    if (_list->size < 1)
     {
-        l_push(list, data);
+        l_push(_list, data, size);
         return;
     }
 
-    Node * newNode = l_createNode(data);
-    Node * found = l_getAt(list, i);
-    Node * foundNext = found->next; // null?
+    node * new_node = l_create_node(data, size);
+    node * found = l_get_at(*_list, pos);
+    node * found_next = found->next; // null?
 
-    found->next = newNode;
-    newNode->prev = found;
-    newNode->i = i;
+    found->next = new_node;
+    new_node->prev = found;
+    new_node->i = pos;
 
-    newNode->next = foundNext;
+    new_node->next = found_next;
 
-    if (foundNext != NULL)
-        foundNext->prev = newNode;
+    if (found_next != NULL)
+        found_next->prev = new_node;
     else 
-        list->bottom = newNode; // new bottom is newNode
+        _list->bottom = new_node; // if next node after found is NULL, it means the new node is the BOTTOM node now
     
 
-    Node * it = newNode->prev;
+    node * it = new_node->prev;
     while (it != NULL)
     {
         it->i++;
         it = it->prev;
     }
-    list->size++;
+    _list->size++;
     return;
 }
 
-char * l_pop(List * list)
+unsigned char * l_pop(list *list)
 {
     if (list->top == NULL)
         return NULL;
     
-    Node * topNode = list->top;
-    char * val = (char *)malloc(strlen(list->top->data) * sizeof(char));
+    node * top_node = list->top;
+    unsigned char * val = (unsigned char *)calloc(top_node->size, sizeof(char));
     
-    strcpy(val, topNode->data);
-    l_cleanupNode(topNode);
+    memcpy(val, top_node->data, top_node->size);
+    
 
     list->top = list->top->next;
     if (list->top == NULL)
@@ -97,19 +96,20 @@ char * l_pop(List * list)
         list->top->prev = NULL;
 
     list->size--;
-    free(topNode);
 
+
+    l_free_node(top_node);
     return val;
 }
 
-Node * l_getAt(List * list, int i)
+node * l_get_at(list _list, int i)
 {    
-    Node * it = NULL;
+    node * it = NULL;
 
-    if (i < 0 || list == NULL)
+    if (i < 0 || _list.size == 0)
         return NULL;
 
-    it = list->top;
+    it = _list.top;
 
     while (it != NULL)
     {
@@ -121,18 +121,18 @@ Node * l_getAt(List * list, int i)
     return it;
 }
 
-Node * l_getByVal(List * list, char * data)
+node * l_get_by_val(list _list, unsigned char * data)
 {
-    Node * it = NULL;
+    node * it = NULL;
 
-    if (list == NULL)
+    if (_list.size == 0)
         return NULL;
 
-    it = list->top;
+    it = _list.top;
 
     while (it != NULL)
     {
-        if (strcmp(it->data, data) == 0)
+        if (strncmp(it->data, data, it->size) == 0)
             return it;
         it = it->next;
     }
@@ -141,7 +141,7 @@ Node * l_getByVal(List * list, char * data)
 }
 
 
-void l_removeNode(List * list, Node * found)
+void l_remove_node(list* list, node * found)
 {
     if (found == NULL)
         return;
@@ -149,29 +149,32 @@ void l_removeNode(List * list, Node * found)
 
     if (found->prev == NULL && found->next == NULL)
     {
-        l_pop(list);
+        unsigned char * data = l_pop(list);
+        free(data);
         return;
     }
 
     // top node
     if (found->prev == NULL)
     {
-        l_pop(list);
+        unsigned char * data = l_pop(list);
+        free(data);
         return;
     }
 
     // bottom node
     if (found->next == NULL)
     {
-        l_dequeue(list);
+        unsigned char* data = l_dequeue(list);
+        free(data);
         return;
     }
 
-    Node * subs = found->prev;
-    Node * it = subs;
+    node * upper_n = found->prev;
+    node * it = upper_n;
 
-    found->next->prev = subs;
-    subs->next = found->next;
+    found->next->prev = upper_n;
+    upper_n->next = found->next;
     list->size--;
 
     while (it != NULL)
@@ -180,110 +183,108 @@ void l_removeNode(List * list, Node * found)
         it = it->prev;
     }
 
-    l_cleanupNode(found);
-    free(found);
+    l_free_node(found);
     return;
 }
 
-void l_removeVal(List * list, char * data)
+void l_remove_val(list* list, unsigned char * data)
 {
-    if (list->size < 1)
+    if (list->size < 1 || list == NULL)
         return;
 
-    Node * found = NULL;
+    node * found = NULL;
 
-    found = l_getByVal(list, data);
-    l_removeNode(list, found);
+    found = l_get_by_val(*list, data);
+    l_remove_node(list, found);
 }
 
-void l_removeAt(List * list, int i)
+void l_remove_at(list* list, int pos)
 {
 
     if (
+        list == NULL ||
         list->size < 1 || 
         list->top == NULL || 
-        i >= list->size ||
-        i < 0
+        pos >= list->size ||
+        pos < 0
     )
         return;
 
+    node * found = NULL;
 
-
-    Node * found = NULL;
-
-    if (i == 0)
+    if (pos == 0)
         found = list->bottom;
-    else if (i == list->size - 1)
+    else if (pos == list->size - 1)
         found = list->top;
     else
-        found = l_getAt(list, i);
+        found = l_get_at(*list, pos);
 
-    l_removeNode(list, found);
+    l_remove_node(list, found);
 }
 
 /**
  * removes from bottom/first position
 */
-char * l_dequeue(List * list)
+unsigned char * l_dequeue(list* _list)
 {
     if (
-        list == NULL || 
-        list->bottom == NULL || 
-        list->size < 1
+        _list == NULL ||
+        _list->bottom == NULL || 
+        _list->size < 1
     )
         return NULL;
 
-    Node * oldBottom = list->bottom;
-    char * val = (char *)malloc(strlen(oldBottom->data) * sizeof(char));
-    strcpy(val, oldBottom->data);
-    list->bottom = oldBottom->prev;
+    node * old_bottom = _list->bottom;
+    unsigned char * val = (unsigned char *)calloc(old_bottom->size, sizeof(char));
+    memcpy(val, old_bottom->data, old_bottom->size);
+    _list->bottom = old_bottom->prev;
 
-    l_cleanupNode(oldBottom);
+    
 
-    if (list->bottom != NULL)
-        list->bottom->next = NULL;
+    if (_list->bottom != NULL)
+        _list->bottom->next = NULL;
     else
-        list->top = NULL;
+        _list->top = NULL;
 
-    list->size--;
+    _list->size--;
 
-    Node * it = list->bottom;
+    node * it = _list->bottom;
     while (it != NULL)
     {
         it->i--;
         it = it->prev;
     }
 
-    free(oldBottom);
+    l_free_node(old_bottom);
     return val;
 }
 
-List * l_newList()
+list l_new()
 {
-    List * list = (List *)malloc(sizeof(List));
+    list new_list;
 
-    list->size = 0;
-    list->top = NULL;
-    list->bottom = NULL;
+    new_list.size = 0;
+    new_list.top = NULL;
+    new_list.bottom = NULL;
 
-    return list;
+    return new_list;
 }
 /**
  * prints list
  * t = top to bottom
  * b = bottom to top
 */
-void l_print(List * list, char dir)
+void l_print(list list, char dir)
 {
 
-    printf("\nstack size: %d\n", list->size);
+    printf("\nstack size: %d\n", list.size);
     printf("Printing all items: \n\n");
 
     if (dir == 't')
     {
-        Node * it = list->top;
+        node * it = list.top;
         printf("-top-\n");
-        while (it != NULL && list->size > 0)
+        while (it != NULL && list.size > 0)
         {
             printf("(%i)\tdata: %s", it->i, it->data);
             if (it->prev != NULL)
@@ -295,10 +296,10 @@ void l_print(List * list, char dir)
         printf("-bottom-\n");
     } else 
     {
-        Node * it = list->bottom;
+        node * it = list.bottom;
 
         printf("-bottom-\n");
-        while (it != NULL && list->size > 0)
+        while (it != NULL && list.size > 0)
         {
             printf("(%i)\tdata: %s", it->i, it->data);
             if (it->prev != NULL)
@@ -312,21 +313,23 @@ void l_print(List * list, char dir)
 
     printf("\n");
 
-    if (list->top != NULL)
-        printf("top:\t(%s)\n", list->top->data);
+    if (list.top != NULL)
+        printf("top:\t(%s)\n", list.top->data);
     
-    if (list->bottom != NULL)
-        printf("bottom:\t(%s)\n\n", list->bottom->data);
+    if (list.bottom != NULL)
+        printf("bottom:\t(%s)\n\n", list.bottom->data);
 }
 
-void l_print_simple(List* list)
+
+void l_print_simple(list l)
 {
-    Node * it = list->bottom;
+    node* it = l.top;
+
     printf("\n\n");
-    while (it != NULL && list->size > 0)
+    while (it != NULL)
     {
         printf("%s\n", it->data);
-        it = it->prev;
+        it = it->next;
     }
 }
 
@@ -334,21 +337,22 @@ void l_print_simple(List* list)
  * free memory from pointers 
  * allocated and set them to NULL
 */
-void l_cleanupNode(Node * n)
+void l_free_node(node * n)
 {
     free(n->data);
-    n->data = NULL;
+    free(n);
 }
 
 
-void l_free_list(List * l)
+void l_free_list(list* l)
 {
-    Node * it = l->top;
+    node* it = l->top;
 
-    while(it != NULL)
+    while (it != NULL)
     {
+        node* next = it->next;
         free(it->data);
-        it = it->next;
+        free(it);
+        it = next;
     }
-    free(l);
-}
+}   

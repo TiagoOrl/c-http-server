@@ -60,9 +60,9 @@ void set_request_type(const char* type_str, struct http_req* header)
 /**
  * converts the http header request string into a list
  */
-List* parser_convert_to_list(const char* str, int size)
+list parser_convert_to_list(const char* str, int size)
 {
-    List* header_list = l_newList();
+    list header_list = l_new();
 
     int i = 0;
     int start = 0;
@@ -79,7 +79,7 @@ List* parser_convert_to_list(const char* str, int size)
                 continue;
             }
                 
-            l_push(header_list, substring);
+            l_push(&header_list, substring, end - start + 1);
 
             start = i + 2;
             i += 2; // jump 2 positions ahead over carriage and newline bytes
@@ -92,9 +92,9 @@ List* parser_convert_to_list(const char* str, int size)
 }
 
 
-List* get_tokens(char* str, unsigned int size)
+list get_tokens(char* str, unsigned int size)
 {
-    List* tokens = l_newList();
+    list tokens = l_new();
     int i = 0;
     int start = 0;
     int end = 0;
@@ -109,7 +109,7 @@ List* get_tokens(char* str, unsigned int size)
                 i++;
                 continue;
             }
-            l_push(tokens, substring);
+            l_push(&tokens, substring, end - start + 1);
             start = i + 1;
         }
         i++;
@@ -119,18 +119,18 @@ List* get_tokens(char* str, unsigned int size)
 }
 
 
-void set_connection_type(List* list, struct http_req* header)
+void set_connection_type(list _list, struct http_req* header)
 {
-    Node* it = list->top;
+    node* it = _list.top;
 
     while(it != NULL)
     {
-        List* key_value = get_tokens(it->data, it->size);
-        Node* key = key_value->bottom;
+        list key_value = get_tokens(it->data, it->size);
+        node* key = key_value.bottom;
 
         if (strncmp(key->data, "Connection:", key->size) == 0)
         {
-            Node* value = key_value->bottom->prev;
+            node* value = key_value.bottom->prev;
 
             if (strncmp(value->data, "keep-alive", 10)  == 0)
                 header->connection = KEEP_ALIVE;
@@ -142,7 +142,7 @@ void set_connection_type(List* list, struct http_req* header)
                 header->connection = CLOSE;
 
         }
-        l_free_list(key_value);
+        l_free_list(&key_value);
         it = it->next;
     }
 }
@@ -153,16 +153,18 @@ struct http_req parse(const char* str, int size)
     struct http_req header;
     memset(header.resource_loc, 0, sizeof(header.resource_loc));
 
-    List* h_list = parser_convert_to_list(str, size);
-    List* req_list = get_tokens(h_list->bottom->data, h_list->bottom->size);
+    list h_list = parser_convert_to_list(str, size);
+    list req_list = get_tokens(h_list.bottom->data, h_list.bottom->size);
 
 
     l_print_simple(h_list);
     
-    set_request_type(req_list->bottom->data, &header);
+    set_request_type(req_list.bottom->data, &header);
     set_connection_type(h_list, &header);
-    strncpy(header.resource_loc, req_list->bottom->prev->data, req_list->bottom->prev->size);
-    l_free_list(req_list);
+    strncpy(header.resource_loc, req_list.bottom->prev->data, req_list.bottom->prev->size);
+
+    
+    l_free_list(&req_list);
 
 }
 
