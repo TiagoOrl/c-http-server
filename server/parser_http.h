@@ -80,6 +80,7 @@ list parser_convert_to_list(const char* str, int size)
             }
                 
             l_push(&header_list, substring, end - start + 1);
+            free(substring);
 
             start = i + 2;
             i += 2; // jump 2 positions ahead over carriage and newline bytes
@@ -110,6 +111,7 @@ list get_tokens(char* str, unsigned int size)
                 continue;
             }
             l_push(&tokens, substring, end - start + 1);
+            free(substring);
             start = i + 1;
         }
         i++;
@@ -163,7 +165,7 @@ struct http_req parse(const char* str, int size)
     set_connection_type(h_list, &header);
     strncpy(header.resource_loc, req_list.bottom->prev->data, req_list.bottom->prev->size);
 
-    
+    l_free_list(&h_list);
     l_free_list(&req_list);
 
 }
