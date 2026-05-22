@@ -15,9 +15,16 @@ bool is_newline(char c)
     return c == '\n';
 }
 
-char* get_substring(const char* str, unsigned int start, unsigned int end)
+bool is_carriage(char c)
 {
-    unsigned int length = end - start;
+    return c == '\r';
+}
+
+char* get_substring(const char* str, int start, int end)
+{
+    int length = end - start;
+    if (length <= 1)
+        return NULL;
     char* substring = (char*)calloc(length + 1, sizeof(char));
 
     for (int i = 0; i <= length; i++)

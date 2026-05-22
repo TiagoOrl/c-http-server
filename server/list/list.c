@@ -6,9 +6,12 @@ Node * l_createNode(char * data)
     Node * node = (Node *)malloc(sizeof(Node));
     node->next = NULL;
     node->prev = NULL;
-    node->data = (char *)malloc(strlen(data) * sizeof(char));
+    int real_size = strlen(data) + 1; // additional space for null terminator
+    node->data = (char *)calloc(real_size, sizeof(char));
     node->i = -1;
 
+    node->size = real_size;
+    node->data[real_size] = '\0';
     strcpy(node->data, data);
 
     return node;
@@ -319,9 +322,10 @@ void l_print(List * list, char dir)
 void l_print_simple(List* list)
 {
     Node * it = list->bottom;
+    printf("\n\n");
     while (it != NULL && list->size > 0)
     {
-        printf("%s", it->data);
+        printf("%s\n", it->data);
         it = it->prev;
     }
 }
@@ -334,4 +338,17 @@ void l_cleanupNode(Node * n)
 {
     free(n->data);
     n->data = NULL;
+}
+
+
+void l_free_list(List * l)
+{
+    Node * it = l->top;
+
+    while(it != NULL)
+    {
+        free(it->data);
+        it = it->next;
+    }
+    free(l);
 }

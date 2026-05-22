@@ -70,7 +70,7 @@ void* server_client_conn_thread(void* arg)
         printf("Client disconnected.\n");
     }
 
-    printf("\n\n\n\n%s\n", in_buffer);
+    // printf("%s", in_buffer);
     parse(in_buffer, strnlen(in_buffer, 1024));
     
     char* data = file_read("./assets/page.html", "rb");
@@ -80,6 +80,8 @@ void* server_client_conn_thread(void* arg)
 
     int header_len = snprintf(buffer_header, sizeof(buffer_header),
         http_header_res,
+        200,
+        "OK",
         html_len
     );
 
