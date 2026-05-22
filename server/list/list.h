@@ -7,28 +7,28 @@
 #include "node.h"
 
 struct _list {
-    Node * top;
-    Node * bottom;
+    node * top;
+    node * bottom;
     unsigned int size;
 };
 
-typedef struct _list List;
+typedef struct _list list;
 
-void l_push(List * list, char * data);
-void l_insertAt(List * list, char * data, size_t i);
-Node * l_getAt(List * l, int i);
-Node * l_getByVal(List * l, char * data);
-void l_removeNode(List * l, Node * n);
-void l_removeAt(List * list, int i);
-void l_removeVal(List * l, char * data);
-char * l_dequeue(List * l);
-char * l_pop(List * list);
-void l_print(List * list, char dir);
-void l_print_simple(List* list);
+void l_push(list* list, unsigned char * data, size_t size);
+void l_insert_at(list *_list, unsigned char * data, int pos, size_t size);
+node * l_get_at(list l, int pos);
+node * l_get_by_val(list l, unsigned char * data);
+void l_remove_node(list* list, node * found);
+void l_remove_at(list* list, int pos);
+void l_remove_val(list* list, unsigned char * data);
+unsigned char * l_dequeue(list* _list);
+unsigned char * l_pop(list *list);
+void l_print(list list, char dir);
+void l_print_simple(list l);
 
-List * l_newList();
-void l_free_list(List * l);
-void l_cleanupNode(Node * n);
-Node * l_createNode(char * val);
+list l_new();
+void l_free_node(node * n);
+void l_free_list(list* l);
+node * l_create_node(unsigned char * data, size_t size);
 
 #endif

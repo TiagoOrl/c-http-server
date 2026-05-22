@@ -6,9 +6,9 @@ struct _node {
     struct _node * prev;
     unsigned int i;
     unsigned int size;
-    char * data;
+    unsigned char * data;
 };
 
-typedef struct _node Node;
+typedef struct _node node;
 
 #endif
