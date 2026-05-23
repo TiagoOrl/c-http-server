@@ -325,7 +325,7 @@ void l_print_simple(list l)
 {
     node* it = l.top;
 
-    printf("\n\n");
+    printf("\n");
     while (it != NULL)
     {
         printf("%s\n", it->data);

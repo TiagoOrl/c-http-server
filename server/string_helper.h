@@ -24,7 +24,7 @@ char* get_substring(const char* str, int start, int end)
 {
     int length = end - start + 1;
 
-    if (length <= 1)
+    if (length < 1)
         return NULL;
         
     char* substring = (char*)calloc(length, sizeof(char));

@@ -159,7 +159,7 @@ struct http_req parse(const char* str, int size)
     list req_list = get_tokens(h_list.bottom->data, h_list.bottom->size);
 
 
-    l_print_simple(h_list);
+    l_print_simple(req_list);
     
     set_request_type(req_list.bottom->data, &header);
     set_connection_type(h_list, &header);

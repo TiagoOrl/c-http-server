@@ -50,7 +50,7 @@ int server_accept_new_conn(struct sockaddr_in* address, int server_fd, socklen_t
     char str[INET_ADDRSTRLEN];
     inet_ntop(AF_INET, &ipAddr, str, INET_ADDRSTRLEN);
 
-    printf("connection from: %s\n", str);
+    printf("\nconnection from: %s\n", str);
 
     return client_fd;
 }
