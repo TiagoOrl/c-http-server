@@ -22,6 +22,7 @@
 #include "file_helper.h"
 #include "http.h"
 #include "parser_http.h"
+#include "http_handler.h"
 
 #define MAX_BUFFER_SIZE 25000
 
@@ -71,12 +72,17 @@ void* server_client_conn_thread(void* arg)
     }
 
     // printf("%s", in_buffer);
-    parse(in_buffer, strnlen(in_buffer, 1024));
+    struct http_req header = parse(in_buffer, strnlen(in_buffer, 1024));
+    handler_handle_request(header);
+
+    char* data = handler_handle_request(header);
+
+    if (data == NULL)
+        return NULL;
     
-    char* data = file_read("./assets/page.html", "rb");
 
     size_t html_len = strnlen(data, MAX_BUFFER_SIZE);
-    char buffer_header[1024];
+    char buffer_header[1024] = {0};
 
     int header_len = snprintf(buffer_header, sizeof(buffer_header),
         http_header_res,

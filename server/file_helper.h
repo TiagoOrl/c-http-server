@@ -12,7 +12,7 @@ char * file_read(const char* path, const char* mode)
 
     if (fp == NULL)
     {   
-        perror("error opening file\n");
+        printf("error opening file: %s\n", path);
         return 0;
     }
 

@@ -150,6 +150,14 @@ void set_connection_type(list _list, struct http_req* header)
 }
 
 
+void set_resource_location(struct http_req* header, list req_list)
+{
+    char * res_path = req_list.bottom->prev->data;
+    unsigned int size = req_list.bottom->prev->size;
+    strncpy(header->resource_loc, res_path, size);
+}
+
+
 struct http_req parse(const char* str, int size)
 {
     struct http_req header;
@@ -159,15 +167,17 @@ struct http_req parse(const char* str, int size)
     list req_list = get_tokens(h_list.bottom->data, h_list.bottom->size);
 
 
-    l_print_simple(req_list);
+    // l_print_simple(req_list);
     
     set_request_type(req_list.bottom->data, &header);
     set_connection_type(h_list, &header);
-    strncpy(header.resource_loc, req_list.bottom->prev->data, req_list.bottom->prev->size);
+    set_resource_location(&header, req_list);
 
     l_free_list(&h_list);
     l_free_list(&req_list);
 
+
+    return header;
 }
 
 
