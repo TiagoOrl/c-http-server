@@ -22,12 +22,14 @@ bool is_carriage(char c)
 
 char* get_substring(const char* str, int start, int end)
 {
-    int length = end - start;
+    int length = end - start + 1;
+
     if (length <= 1)
         return NULL;
-    char* substring = (char*)calloc(length + 1, sizeof(char));
+        
+    char* substring = (char*)calloc(length, sizeof(char));
 
-    for (int i = 0; i <= length; i++)
+    for (int i = 0; i < length; i++)
     {
         substring[i] = str[start + i];
     }
