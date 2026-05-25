@@ -10,13 +10,18 @@
 /**
  * handles the request and returns the file data requested in header, returns 0 if not found
  */
-char* handler_handle_request(struct http_req header, char** res_data)
+void handler_handle_request(struct http_req header, char** res_data, int* out_len)
 {
     const char* res_path_format = "./assets%s";
     char path[150];
 
     snprintf(path, sizeof(path), res_path_format, header.resource_name);
     *res_data = file_read(path, "rb");
+
+    if (*res_data == NULL)
+        return;
+
+    *out_len = strnlen(*res_data, MAX_BUFFER_SIZE);
 }
 
 
@@ -26,7 +31,8 @@ void* server_client_conn_thread(void* arg)
     int* fd = (int*)arg;
     char response_buffer[1024] = {0};
     struct http_req header;
-    char* resource_data = NULL;
+    char* resource = NULL;
+    int res_len = 0;
 
     memset(in_buffer, 0, sizeof(in_buffer));
     header.connection = KEEP_ALIVE;
@@ -42,17 +48,13 @@ void* server_client_conn_thread(void* arg)
 
     header = parse(in_buffer, strnlen(in_buffer, 1024));
 
-    handler_handle_request(header, &resource_data);
+    handler_handle_request(header, &resource, &res_len);
 
-    if (resource_data == NULL)
+    if (resource == NULL)
     {
-        close(*fd);
+        // close(*fd);
         return NULL;
     }
-        
-    
-
-    size_t html_len = strnlen(resource_data, MAX_BUFFER_SIZE);
     
 
     int header_len = snprintf(response_buffer, sizeof(response_buffer),
@@ -60,14 +62,14 @@ void* server_client_conn_thread(void* arg)
         200,
         "OK",
         "text/html",
-        html_len
+        res_len
     );
 
     send(*fd, response_buffer, header_len, 0);
-    send(*fd, resource_data, html_len, 0);
+    send(*fd, resource, res_len, 0);
 
     close(*fd);
-    free(resource_data);
+    free(resource);
 
     return NULL;
 }
