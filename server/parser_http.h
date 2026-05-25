@@ -6,6 +6,9 @@
 #include "list/list.h"
 #include "string_helper.h"
 
+#define MAX_BUFFER_SIZE 25000
+#define RES_HEADER_SIZE 1024
+
 
 // GET /favicon.ico HTTP/1.1
 // Host: 127.0.0.1:9090
@@ -39,7 +42,10 @@ struct http_req {
     enum connection connection;
     char content_type[100];
     char resource_name[80];
-
+    char res_header_buff[RES_HEADER_SIZE];
+    char* res_resource;
+    int res_resource_len;
+    int res_header_len;
 };
 
 
@@ -134,6 +140,8 @@ void set_resource_location(struct http_req* header, list req_list)
 {
     char * resource_path = req_list.bottom->prev->data;
     unsigned int res_path_size = req_list.bottom->prev->size;
+    const char* res_path_format = "./assets%s";
+    char path[150];
 
 
     if (res_path_size <= 2)
@@ -161,6 +169,44 @@ void set_resource_location(struct http_req* header, list req_list)
         l_free_list(&loc_path_list);
     }
 
+
+    snprintf(path, sizeof(path), res_path_format, header->resource_name);
+
+    header->res_resource = file_read(path, "rb");   // is null if file not found
+
+    if (header->res_resource == NULL)
+    {
+        header->res_resource_len = 0;
+        return;
+    }
+
+    header->res_resource_len = strnlen(header->res_resource, MAX_BUFFER_SIZE);
+}
+
+
+void set_response_header(struct http_req* header)
+{
+    char res_str[40] = {0};
+    int res_code = 200;
+
+    strncpy(res_str, "OK", 2);
+
+    if (header->res_resource == NULL)
+    {
+        res_code = 404;
+        strncpy(res_str, "NOT FOUND", 9);
+    }
+        
+
+    int header_len = snprintf(header->res_header_buff, RES_HEADER_SIZE,
+        http_header_template,
+        res_code,
+        res_str,
+        header->content_type,
+        header->res_resource_len
+    );
+
+    header->res_header_len = header_len;
 }
 
 
@@ -173,12 +219,11 @@ struct http_req parse(const char* str, int size)
     list h_list = parser_convert_to_list(str, size);
     list req_list = get_substrings(h_list.bottom->data, h_list.bottom->size, ' ');
 
-
-    // l_print_simple(req_list);
     
     set_request_type(req_list.bottom->data, &header);
     set_connection_type(h_list, &header);
     set_resource_location(&header, req_list);
+    set_response_header(&header);
 
     l_free_list(&h_list);
     l_free_list(&req_list);

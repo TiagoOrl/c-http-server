@@ -9,7 +9,7 @@
  * application/javascript for script
  */
 
-const char* http_header_res = 
+const char* http_header_template = 
     "HTTP/1.1 %d %s\r\n"
     "Content-Type: %s; charset=UTF-8\r\n"
     "Content-Length: %zu\r\n"

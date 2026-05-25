@@ -4,38 +4,14 @@
 #include "parser_http.h"
 #include "file_helper.h"
 
-#define MAX_BUFFER_SIZE 25000
-
-
-/**
- * handles the request and returns the file data requested in header, returns 0 if not found
- */
-void handler_handle_request(struct http_req header, char** res_data, int* out_len)
-{
-    const char* res_path_format = "./assets%s";
-    char path[150];
-
-    snprintf(path, sizeof(path), res_path_format, header.resource_name);
-    *res_data = file_read(path, "rb");
-
-    if (*res_data == NULL)
-        return;
-
-    *out_len = strnlen(*res_data, MAX_BUFFER_SIZE);
-}
 
 
 void* server_client_conn_thread(void* arg)
 {
     char in_buffer[1024];
     int* fd = (int*)arg;
-    char response_buffer[1024] = {0};
-    struct http_req header;
-    char* resource = NULL;
-    int res_len = 0;
 
     memset(in_buffer, 0, sizeof(in_buffer));
-    header.connection = KEEP_ALIVE;
 
     size_t res_read = read(*fd, in_buffer, sizeof(in_buffer) - 1);
 
@@ -46,30 +22,13 @@ void* server_client_conn_thread(void* arg)
         return NULL;
     }
 
-    header = parse(in_buffer, strnlen(in_buffer, 1024));
+    struct http_req header = parse(in_buffer, strnlen(in_buffer, 1024));
 
-    handler_handle_request(header, &resource, &res_len);
-
-    if (resource == NULL)
-    {
-        // close(*fd);
-        return NULL;
-    }
-    
-
-    int header_len = snprintf(response_buffer, sizeof(response_buffer),
-        http_header_res,
-        200,
-        "OK",
-        "text/html",
-        res_len
-    );
-
-    send(*fd, response_buffer, header_len, 0);
-    send(*fd, resource, res_len, 0);
+    send(*fd, header.res_header_buff, header.res_header_len, 0);
+    send(*fd, header.res_resource, header.res_resource_len, 0);
 
     close(*fd);
-    free(resource);
+    free(header.res_resource);
 
     return NULL;
 }
