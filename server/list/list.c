@@ -132,7 +132,7 @@ node * l_get_by_val(list _list, unsigned char * data)
 
     while (it != NULL)
     {
-        if (strncmp(it->data, data, it->size) == 0)
+        if (memcmp(it->data, data, it->size) == 0)
             return it;
         it = it->next;
     }
@@ -325,7 +325,7 @@ void l_print_simple(list l)
 {
     node* it = l.top;
 
-    printf("\n\n");
+    printf("\n");
     while (it != NULL)
     {
         printf("%s\n", it->data);
@@ -355,4 +355,8 @@ void l_free_list(list* l)
         free(it);
         it = next;
     }
-}   
+
+    l->bottom = NULL;
+    l->top = NULL;
+    l->size = 0;
+} 

@@ -1,4 +1,5 @@
 cd ./server
 make cl
 make all
-gdb ./app
+cd ..
+gdb ./server/app

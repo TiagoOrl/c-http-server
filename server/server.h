@@ -22,8 +22,7 @@
 #include "file_helper.h"
 #include "http.h"
 #include "parser_http.h"
-
-#define MAX_BUFFER_SIZE 25000
+#include "http_handler.h"
 
 
 pthread_mutex_t lock;
@@ -50,50 +49,10 @@ int server_accept_new_conn(struct sockaddr_in* address, int server_fd, socklen_t
     char str[INET_ADDRSTRLEN];
     inet_ntop(AF_INET, &ipAddr, str, INET_ADDRSTRLEN);
 
-    // printf("connection from: %s\n", str);
+    printf("\nconnection from: %s\n", str);
 
     return client_fd;
 }
-
-
-void* server_client_conn_thread(void* arg)
-{
-    char in_buffer[1024];
-    int* fd = (int*)arg;
-    
-
-    memset(in_buffer, 0, sizeof(in_buffer));
-    size_t res_read = read(*fd, in_buffer, sizeof(in_buffer) - 1);
-
-    if (res_read <= 0)
-    {
-        printf("Client disconnected.\n");
-    }
-
-    // printf("%s", in_buffer);
-    parse(in_buffer, strnlen(in_buffer, 1024));
-    
-    char* data = file_read("./assets/page.html", "rb");
-
-    size_t html_len = strnlen(data, MAX_BUFFER_SIZE);
-    char buffer_header[1024];
-
-    int header_len = snprintf(buffer_header, sizeof(buffer_header),
-        http_header_res,
-        200,
-        "OK",
-        html_len
-    );
-
-    send(*fd, buffer_header, header_len, 0);
-    send(*fd, data, html_len, 0);
-
-    close(*fd);
-    free(data);
-
-    return NULL;
-}
-
 
 
 void server_start(unsigned short port)
