@@ -16,15 +16,7 @@ char* handler_handle_request(struct http_req header)
     char* res_data = NULL;
     char path[150];
 
-    // printf("%s\n", header.resource_loc);
-
-    if (header.resource_loc[0] == '/' && header.resource_loc[1] == 0)
-    {
-        return file_read("./assets/page.html", "rb");
-    }
-
     snprintf(path, sizeof(path), res_path_format, header.resource_loc);
-
     res_data = file_read(path, "rb");
 
 

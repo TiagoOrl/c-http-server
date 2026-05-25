@@ -133,15 +133,17 @@ void set_resource_location(struct http_req* header, list req_list)
 {
     char * resource_path = req_list.bottom->prev->data;
     unsigned int res_path_size = req_list.bottom->prev->size;
-    strncpy(header->resource_loc, resource_path, res_path_size);
 
 
     if (res_path_size <= 2)
     {
         header->content_type = HTML;
+        strncpy(header->resource_loc, "/page.html", 10);
     }
     else 
     {
+        strncpy(header->resource_loc, resource_path, res_path_size);
+
         list loc_path_list = get_substrings(resource_path, res_path_size, '.');
 
         char * mimetype = loc_path_list.top->data;
@@ -154,8 +156,6 @@ void set_resource_location(struct http_req* header, list req_list)
             header->content_type = SCRIPT;
         if (strncmp(mimetype, "ico", 3) == 0)
             header->content_type = ICON;
-
-        printf("%s content type: %d\n", loc_path_list.top->data, header->content_type);
 
         l_free_list(&loc_path_list);
     }
