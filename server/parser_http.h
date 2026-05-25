@@ -37,8 +37,9 @@ enum content_type
 struct http_req {
     enum request request;
     enum connection connection;
-    enum content_type content_type;
+    char content_type[100];
     char resource_name[80];
+
 };
 
 
@@ -137,7 +138,7 @@ void set_resource_location(struct http_req* header, list req_list)
 
     if (res_path_size <= 2)
     {
-        header->content_type = HTML;
+        strncpy(header->content_type, "text/html", 9);
         strncpy(header->resource_name, "/page.html", 10);
     }
     else 
@@ -149,13 +150,13 @@ void set_resource_location(struct http_req* header, list req_list)
         char * mimetype = loc_path_list.top->data;
 
         if (strncmp(mimetype, "html", 4) == 0)
-            header->content_type = HTML;
+            strncpy(header->content_type, "text/html", 9);
         if (strncmp(mimetype, "css", 3) == 0)
-            header->content_type = CSS;
+            strncpy(header->content_type, "text/css", 8);
         if (strncmp(mimetype, "js", 2) == 0)
-            header->content_type = SCRIPT;
+            strncpy(header->content_type, "application/javascript", 22);
         if (strncmp(mimetype, "ico", 3) == 0)
-            header->content_type = ICON;
+            strncpy(header->content_type, "media", 5);
 
         l_free_list(&loc_path_list);
     }
@@ -167,6 +168,7 @@ struct http_req parse(const char* str, int size)
 {
     struct http_req header;
     memset(header.resource_name, 0, sizeof(header.resource_name));
+    memset(header.content_type, 0, sizeof(header.content_type));
 
     list h_list = parser_convert_to_list(str, size);
     list req_list = get_substrings(h_list.bottom->data, h_list.bottom->size, ' ');
