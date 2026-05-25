@@ -38,7 +38,7 @@ struct http_req {
     enum request request;
     enum connection connection;
     enum content_type content_type;
-    char resource_loc[80];
+    char resource_name[80];
 };
 
 
@@ -138,11 +138,11 @@ void set_resource_location(struct http_req* header, list req_list)
     if (res_path_size <= 2)
     {
         header->content_type = HTML;
-        strncpy(header->resource_loc, "/page.html", 10);
+        strncpy(header->resource_name, "/page.html", 10);
     }
     else 
     {
-        strncpy(header->resource_loc, resource_path, res_path_size);
+        strncpy(header->resource_name, resource_path, res_path_size);
 
         list loc_path_list = get_substrings(resource_path, res_path_size, '.');
 
@@ -166,7 +166,7 @@ void set_resource_location(struct http_req* header, list req_list)
 struct http_req parse(const char* str, int size)
 {
     struct http_req header;
-    memset(header.resource_loc, 0, sizeof(header.resource_loc));
+    memset(header.resource_name, 0, sizeof(header.resource_name));
 
     list h_list = parser_convert_to_list(str, size);
     list req_list = get_substrings(h_list.bottom->data, h_list.bottom->size, ' ');

@@ -15,7 +15,7 @@ char* handler_handle_request(struct http_req header, char** res_data)
     const char* res_path_format = "./assets%s";
     char path[150];
 
-    snprintf(path, sizeof(path), res_path_format, header.resource_loc);
+    snprintf(path, sizeof(path), res_path_format, header.resource_name);
     *res_data = file_read(path, "rb");
 }
 
